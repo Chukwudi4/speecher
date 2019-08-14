@@ -1,14 +1,18 @@
 import React from 'react';
-import { StyleSheet, Text, View, ToolbarAndroid,
+import { StyleSheet, Text, View, AppState,
        TouchableOpacity, Platform, ToastAndroid,
         Clipboard, Image, Slider } from 'react-native';
 import {Constants, Speech } from 'expo'
+
+const SPEECH = "addadfddaf"
+
 export default class App extends React.Component {
 
   constructor(){
     super()
     this.state = {
       text:"Stripe uses conventional HTTP response codes to indicate the success or failure of an API request",
+      appState: AppState.currentState
       
     }
   }
@@ -71,22 +75,40 @@ render() {
   };
 
 onSpeak =()=>{
-  this.readFromClipboard()
   text =  this.state.text
     const opt = 
       {language: 'en-GB',
       pitch: 1.0,
       rate: 1.0,
-      onStart:function(){} ,
+      onStart:()=> console.warn("started") ,
       onDone:function(){},
-      onStopped:function(){} ,
-      onError:function(){}}
+      onStopped:()=> Platform.OS=== 'ios'? alert("Stoped"): ToastAndroid.show("Stopped", ToastAndroid.SHORT),
+      onError:()=> ToastAndroid.show("An error occured", ToastAndroid.SHORT)}
 
     
    
     
     //'Ok  By July 9th i will be done with youth service'
     Speech.speak(text,opt)
+}
+
+componentDidMount(){
+  AppState.addEventListener( "change", this._handleAppStateChange);
+}
+
+_handleAppStateChange = (nextAppState) => {
+  if (
+    this.state.appState.match(/inactive|background/) &&
+    nextAppState === 'active'
+  ) {
+    this.readFromClipboard()
+    this.onSpeak()
+  }
+  this.setState({appState: nextAppState});
+};
+
+componentWillUnmount() {
+  AppState.removeEventListener("change", this._handleAppStateChange);
 }
   
   onPause(){   
